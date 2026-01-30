@@ -1,35 +1,56 @@
 import exifread
-import subprocess
+import sys
 
-with open("./IMAGENAME", 'rb') as f:
-    tags = exifread.process_file(f)
-
-wanted_rename = {
-    "GPS GPSLatitude":"Latitude",
-    "GPS GPSLatitudeRef":"LatitudeRef",
-    "GPS GPSLongitudeRef":"LongitudeRef",
-    "GPS GPSLongitude":"Longitude",
-    "EXIF LensModel":"LensModel",
-    "Image Make":"Image Make",
-    "Image Model":"Image Model",
-    "Image DateTime":"Date"
-}
-
-filtered_dict = {wanted_rename[want]: tags[want] for want in wanted_rename.keys()}
 
 def format_coord(unformatted_cord) -> str:
     return f"{unformatted_cord[0]}°{unformatted_cord[1]}'{eval(str(unformatted_cord[2]))}\""
 
-for k, v in  filtered_dict.items():
-    print(f"{str(k):15} {str(v):50}")
-
-
-lat = format_coord(list(filtered_dict["Latitude"].values))
-long = format_coord(list(filtered_dict["Longitude"].values))
-latref = str(filtered_dict["LatitudeRef"])
-longref = str(filtered_dict["LongitudeRef"])
-
 def maps_url(lat, long, latref, longref) -> str:
     return f"https://maps.google.com/maps/place/{lat}{latref}+{long}{longref}"
 
-subprocess.run(["firefox", maps_url(long, lat, latref, longref)])
+def convert_coord_to_decimal(degrees:float, minutes:float, seconds:float) -> float:
+    """
+    converts "angle" representation into decimal
+    """
+    return degrees + (minutes/60) + (seconds/3600)
+
+COORD_KEYS = {
+        "GPS GPSLatitude":"Latitude",
+        "GPS GPSLatitudeRef":"LatitudeRef",
+        "GPS GPSLongitudeRef":"LongitudeRef",
+        "GPS GPSLongitude":"Longitude",
+}
+
+def get_coord_from_image(image_path:str) -> tuple:
+    """
+    Returns a tuple where the first argument is the latitude in decimal and the second argument is the longitude in decimal (signs included)
+    """
+    with open(image_path, 'rb') as f:
+        tags = exifread.process_file(f)
+    filtered_dict = {COORD_KEYS[want]: tags.get(want) for want in (COORD_KEYS.keys())}
+    #print(filtered_dict)
+    lat = [eval(str(val)) for val in filtered_dict["Latitude"].values]
+    long = [eval(str(val)) for val in filtered_dict["Longitude"].values]
+    latref = str(filtered_dict["LatitudeRef"])
+    longref = str(filtered_dict["LongitudeRef"])
+    signs_dict = {
+        'N':1,
+        'S':-1,
+        'E':1,
+        'W':-1
+    }
+    lat_decimal = signs_dict[latref]*convert_coord_to_decimal(*lat)
+    long_decimal = signs_dict[longref]*convert_coord_to_decimal(*long)
+    return (lat_decimal, long_decimal)
+
+def main():
+    if len(sys.argv) == 1:
+        exit("Error: please enter a directory with all your images")
+    files_list = sys.argv[1:]
+    csv_string = "lat,lon\n"
+    for image in files_list:
+        coord_in_decimal = get_coord_from_image(image)
+        csv_string += f"{coord_in_decimal[0]},{coord_in_decimal[1]}\n"
+    print(csv_string)
+if __name__ == "__main__":
+    main()
