@@ -28,8 +28,8 @@ for k, v in  filtered_dict.items():
 
 
 try:
-    long = format_coord(list(filtered_dict["Latitude"].values))
-    lat = format_coord(list(filtered_dict["Longitude"].values))
+    lat = format_coord(list(filtered_dict["Latitude"].values))
+    long = format_coord(list(filtered_dict["Longitude"].values))
     latref = str(filtered_dict["LatitudeRef"])
     longref = str(filtered_dict["LongitudeRef"])
     print(maps_url(lat, long, latref, longref))
