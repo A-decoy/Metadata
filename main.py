@@ -4,9 +4,6 @@ from tabulate import tabulate
 
 with open("IMAGENAME", "rb") as f:
     tags = exifread.process_file(f)
-    
-for h in tags.keys():
-    print(f"{h}: {tags[h]}") 
 
 wanted = ["Image Make", "Image Model", "Image DateTime", "GPSLong", "GPSLatit" ,"LensModel"]
 location_key = ["LatitudeRef", "Latitude", "LongitudeRef", "Longitude"]
@@ -32,4 +29,4 @@ if error == 1:
 else:
     table.append(["Location:", location])
     print(tabulate(table))
-    print(f"Location: maps.google.com\maps\place{location}")
+    print(f"Location: maps.google.com\maps\place\{location}")
