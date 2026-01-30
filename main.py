@@ -1,34 +1,37 @@
 import exifread
-from tabulate import tabulate
 
-
-with open("IMAGENAME", "rb") as f:
+with open("./IMAGENAME", 'rb') as f:
     tags = exifread.process_file(f)
 
-wanted = ["Image Make", "Image Model", "Image DateTime", "GPSLong", "GPSLatit" ,"LensModel"]
-location_key = ["LatitudeRef", "Latitude", "LongitudeRef", "Longitude"]
+wanted_rename = {
+    "GPS GPSLatitude":"Latitude",
+    "GPS GPSLatitudeRef":"LatitudeRef",
+    "GPS GPSLongitudeRef":"LongitudeRef",
+    "GPS GPSLongitude":"Longitude",
+    "EXIF LensModel":"LensModel",
+    "Image Make":"Image Make",
+    "Image Model":"Image Model",
+    "Image DateTime":"Date"
+}
 
-wanted_dict = {h: tags[h] for items in wanted for h in tags.keys() if items in h}
+filtered_dict = {wanted_rename[want]: tags.get(want) for want in (wanted_rename.keys())}
 
-print(wanted_dict)
+def format_coord(unformatted_cord) -> str:
+    return f"{unformatted_cord[0]}°{unformatted_cord[1]}'{eval(str(unformatted_cord[2]))}\""
 
-x = 0
-location = ""
-error = 0
+def maps_url(lat, long, latref, longref) -> str:
+    return f"https://maps.google.com/maps/place/{lat}{latref}+{long}{longref}"
+
+for k, v in  filtered_dict.items():
+    if v != None:
+        print(f"{str(k):15} {str(v):50}")
+
 
 try:
-    while x < 3:
-        location += str(wanted_dict[f"GPS GPS{location_key[x+1]}"].values[0]) + "°" + str(wanted_dict[f"GPS GPS{location_key[x+1]}"].values[1]) + "'" + str(float(wanted_dict[f"GPS GPS{location_key[x+1]}"].values[2])) + '"' +    str(wanted_dict[f"GPS GPS{location_key[x]}"])
-        x+=2     
+    long = format_coord(list(filtered_dict["Latitude"].values))
+    lat = format_coord(list(filtered_dict["Longitude"].values))
+    latref = str(filtered_dict["LatitudeRef"])
+    longref = str(filtered_dict["LongitudeRef"])
+    print(maps_url(lat, long, latref, longref))
 except:
-    error = 1
     pass
-
-table = [["Device:", str(wanted_dict["Image Model"])], ["Time:", str(wanted_dict["Image DateTime"])], ["Camera:", str(wanted_dict["EXIF LensModel"])]]
-
-if error == 1:
-    print(tabulate(table))
-else:
-    table.append(["Location:", location])
-    print(tabulate(table))
-    print(f"Location: maps.google.com\maps\place\{location}")
