@@ -1,5 +1,11 @@
 import exifread
 
+def format_coord(unformatted_cord) -> str:
+    return f"{unformatted_cord[0]}°{unformatted_cord[1]}'{eval(str(unformatted_cord[2]))}\""
+
+def maps_url(lat, long, latref, longref) -> str:
+    return f"https://maps.google.com/maps/place/{lat}{latref}+{long}{longref}"
+
 with open("./IMAGENAME", 'rb') as f:
     tags = exifread.process_file(f)
 
@@ -16,16 +22,9 @@ wanted_rename = {
 
 filtered_dict = {wanted_rename[want]: tags.get(want) for want in (wanted_rename.keys())}
 
-def format_coord(unformatted_cord) -> str:
-    return f"{unformatted_cord[0]}°{unformatted_cord[1]}'{eval(str(unformatted_cord[2]))}\""
-
-def maps_url(lat, long, latref, longref) -> str:
-    return f"https://maps.google.com/maps/place/{lat}{latref}+{long}{longref}"
-
 for k, v in  filtered_dict.items():
     if v != None:
         print(f"{str(k):15} {str(v):50}")
-
 
 try:
     lat = format_coord(list(filtered_dict["Latitude"].values))
