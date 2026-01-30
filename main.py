@@ -13,6 +13,8 @@ location_key = ["LatitudeRef", "Latitude", "LongitudeRef", "Longitude"]
 
 wanted_dict = {h: tags[h] for items in wanted for h in tags.keys() if items in h}
 
+print(wanted_dict)
+
 x = 0
 location = ""
 error = 0
